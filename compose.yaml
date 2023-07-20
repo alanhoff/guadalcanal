@@ -1,0 +1,81 @@
+services:
+  # Desktops virtuais, de preferêncua um para cada usuário
+  # Usuário padrão é abc e senha abc
+  desktop-01:
+    image: lscr.io/linuxserver/rdesktop:ubuntu-xfce
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    shm_size: "1gb"
+    volumes:
+      - ./desktop/desktop-01:/config
+  desktop-02:
+    image: lscr.io/linuxserver/rdesktop:fedora-mate
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    shm_size: "1gb"
+    volumes:
+      - ./desktop/desktop-02:/config
+  desktop-03:
+    image: lscr.io/linuxserver/rdesktop:alpine-kde
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    shm_size: "1gb"
+    volumes:
+      - ./desktop/desktop-03:/config
+  desktop-04:
+    image: lscr.io/linuxserver/rdesktop:arch-icewm
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    shm_size: "1gb"
+    volumes:
+      - ./desktop/desktop-04:/config
+
+  # Guacamole
+  guacd:
+    image: guacamole/guacd:1.5.2
+    environment:
+      - GUACD_LOG_LEVEL=debug
+    ports:
+      - 4822:4822
+  guacamole:
+    image: guacamole/guacamole:1.5.2
+    environment:
+      - GUACD_HOSTNAME=guacd
+      - GUACD_PORT=4822
+      - MYSQL_HOSTNAME=mariadb
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=guacamole
+    ports:
+      - 8080:8080
+    depends_on:
+      - guacd
+      - mariadb
+  mariadb:
+    image: mariadb:lts
+    environment:
+      - MARIADB_ROOT_PASSWORD=root
+      - MARIADB_DATABASE=guacamole
+    volumes:
+      - type: bind
+        source: ./database/datadir
+        target: /var/lib/mysql
+      - type: bind
+        source: ./database/guacamole.sql
+        target: /docker-entrypoint-initdb.d/guacamole.sql
