@@ -1,6 +1,5 @@
 services:
-  # Desktops virtuais, de preferêncua um para cada usuário
-  # Usuário padrão é abc e senha abc
+  # Desktops virtual
   desktop-01:
     image: lscr.io/linuxserver/rdesktop:ubuntu-xfce
     security_opt:
@@ -12,47 +11,12 @@ services:
     shm_size: "1gb"
     volumes:
       - ./desktop/desktop-01:/config
-  desktop-02:
-    image: lscr.io/linuxserver/rdesktop:fedora-mate
-    security_opt:
-      - seccomp:unconfined
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
-    shm_size: "1gb"
-    volumes:
-      - ./desktop/desktop-02:/config
-  desktop-03:
-    image: lscr.io/linuxserver/rdesktop:alpine-kde
-    security_opt:
-      - seccomp:unconfined
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
-    shm_size: "1gb"
-    volumes:
-      - ./desktop/desktop-03:/config
-  desktop-04:
-    image: lscr.io/linuxserver/rdesktop:arch-icewm
-    security_opt:
-      - seccomp:unconfined
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
-    shm_size: "1gb"
-    volumes:
-      - ./desktop/desktop-04:/config
+    ports:
+      - 3389:3389
 
   # Guacamole
   guacd:
     image: guacamole/guacd:1.5.2
-    environment:
-      - GUACD_LOG_LEVEL=debug
-    ports:
-      - 4822:4822
   guacamole:
     image: guacamole/guacamole:1.5.2
     environment:
@@ -67,15 +31,13 @@ services:
     depends_on:
       - guacd
       - mariadb
+
+  # Banco de dados
   mariadb:
     image: mariadb:lts
     environment:
       - MARIADB_ROOT_PASSWORD=root
       - MARIADB_DATABASE=guacamole
     volumes:
-      - type: bind
-        source: ./database/datadir
-        target: /var/lib/mysql
-      - type: bind
-        source: ./database/guacamole.sql
-        target: /docker-entrypoint-initdb.d/guacamole.sql
+      - ./database/datadir:/var/lib/mysql
+      - ./database/guacamole.sql:/docker-entrypoint-initdb.d/guacamole.sql
