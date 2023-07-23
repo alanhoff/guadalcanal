@@ -1,0 +1,36 @@
+FROM ubuntu:22.04 as pulse
+
+# Habilitando source codes
+RUN sed -i '/deb-src/s/^# //' /etc/apt/sources.list
+
+# Instalando dependências
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    build-essential \
+    devscripts \
+    dpkg-dev \
+    git \
+    libpulse-dev \
+    meson \
+    pulseaudio \
+  && apt build-dep -y pulseaudio
+
+# Compilando pulseaudio
+RUN cd /tmp \
+  && mkdir pulseaudio \
+  && cd pulseaudio \
+  && apt-get source pulseaudio \
+  && PULSE_DIR="/tmp/pulseaudio/pulseaudio-$(dpkg-query -W -f='${source:Upstream-Version}' pulseaudio)" \
+  && cd $PULSE_DIR \
+  && meson build
+
+# Compilando xrdp-pulseaudio-installer
+RUN cd /tmp \
+  && PULSE_DIR="/tmp/pulseaudio/pulseaudio-$(dpkg-query -W -f='${source:Upstream-Version}' pulseaudio)" \
+  && git clone https://github.com/neutrinolabs/pulseaudio-module-xrdp.git \
+  && cd pulseaudio-module-xrdp \
+  && git checkout v0.7 \
+  && ./bootstrap \
+  && ./configure PULSE_DIR=$PULSE_DIR \
+  && make \
+  && install -t "./out/var/lib/xrdp-pulseaudio-installer" -D -m 644 src/.libs/*.so

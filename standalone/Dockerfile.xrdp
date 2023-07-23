@@ -1,0 +1,50 @@
+FROM ubuntu:22.04 as xrdp
+
+# Preferências do APT
+COPY ./files/etc/apt /etc/apt
+COPY --from=desktop:pulse /tmp/pulseaudio-module-xrdp/out /
+
+# Instalar xrdp
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  ca-certificates \
+  dbus-x11 \
+  libfuse2 \
+  libx11-dev \
+  libxfixes3 \
+  libxml2 \
+  libxrandr2 \
+  openssh-client \
+  pulseaudio \
+  software-properties-common \
+  x11-apps \
+  x11-xserver-utils \
+  xfonts-base \
+  xorgxrdp \
+  xrdp \
+  xserver-xorg-core \
+  xserver-xorg-video-all\
+  xutils \
+  zlib1g \
+  mousepad \
+  xfce4-terminal \
+  xfce4 \
+  xubuntu-default-settings \
+  xubuntu-icon-theme \
+  software-properties-common \
+  gpg-agent \
+  pavucontrol \
+  && apt-get autoclean \
+  && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+
+# Instalar Firefox
+RUN add-apt-repository -y ppa:mozillateam/ppa \
+  && apt-get update \
+  && apt-get install -y firefox \
+  && apt-get autoclean \
+  && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+
+# Preferências do pulse-audio
+COPY ./files/etc/pulse /etc/pulse
+
+# Cria diretório dbus
+RUN mkdir /run/dbus
